@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Daily Task Planner</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+  <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: linear-gradient(135deg, #1a1a40, #0f2027);
+      background-size: 300% 300%;
+      animation: gradientShift 10s ease infinite;
+    }
+    @keyframes gradientShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    .glass {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      border: 2px solid #38bdf8;
+      box-shadow: 0 0 25px rgba(56, 189, 248, 0.3);
+    }
+    .scrollbar-hide::-webkit-scrollbar {
+      display: none;
+    }
+    .day-image {
+      width: 28px;
+      height: 28px;
+      border-radius: 9999px;
+      object-fit: cover;
+      box-shadow: 0 0 6px #22d3ee;
+    }
+  </style>
+</head>
+<body class="min-h-screen text-white px-4 py-10 flex flex-col items-center justify-center">
+  <div class="glass w-full max-w-6xl rounded-3xl p-10 shadow-2xl animate-fade-in-up" data-aos="fade-up">
+    <div class="text-center mb-10">
+      <h1 class="text-5xl font-extrabold text-cyan-300 animate-pulse">🌿 Daily - Task - Planner</h1>
+    </div>
+
+    <div class="flex flex-col sm:flex-row gap-4 mb-8">
+      <select id="daySelect" class="w-full sm:w-1/4 p-3 rounded-lg bg-gray-900 text-white focus:ring-2 focus:ring-cyan-400">
+        <option value="">Select Day</option>
+        <option>Monday</option>
+        <option>Tuesday</option>
+        <option>Wednesday</option>
+        <option>Thursday</option>
+        <option>Friday</option>
+        <option>Saturday</option>
+        <option>Sunday</option>
+      </select>
+      <input id="taskInput" type="text" placeholder="Enter your task here..." class="w-full p-3 rounded-lg bg-gray-900 focus:outline-none focus:ring-2 focus:ring-cyan-400">
+      <button onclick="addTask()" class="bg-gradient-to-r from-cyan-400 to-blue-500 px-6 py-3 rounded-xl font-semibold hover:scale-105 transition-transform">➕ Add</button>
+    </div>
+
+    <div id="planner" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 scrollbar-hide">
+      <!-- Task Cards -->
+    </div>
+  </div>
+
+  <script>
+    AOS.init();
+    const planner = document.getElementById('planner');
+    const taskInput = document.getElementById('taskInput');
+    const daySelect = document.getElementById('daySelect');
+    let tasks = JSON.parse(localStorage.getItem('plannerTasks')) || {};
+
+    const dayImages = {
+      Monday: 'https://cdn-icons-png.flaticon.com/512/427/427735.png',
+      Tuesday: 'https://cdn-icons-png.flaticon.com/512/1163/1163661.png',
+      Wednesday: 'https://cdn-icons-png.flaticon.com/512/4151/4151764.png',
+      Thursday: 'https://cdn-icons-png.flaticon.com/512/869/869869.png',
+      Friday: 'https://cdn-icons-png.flaticon.com/512/616/616494.png',
+      Saturday: 'https://cdn-icons-png.flaticon.com/512/1484/1484872.png',
+      Sunday: 'https://cdn-icons-png.flaticon.com/512/4151/4151740.png'
+    };
+
+    function saveTasks() {
+      localStorage.setItem('plannerTasks', JSON.stringify(tasks));
+    }
+
+    function renderTasks() {
+      planner.innerHTML = '';
+      const days = Object.keys(dayImages);
+      days.forEach(day => {
+        const card = document.createElement('div');
+        card.className = 'bg-gray-900 p-5 rounded-2xl shadow-xl border-2 border-cyan-600';
+        card.setAttribute('data-aos', 'fade-up');
+
+        const title = document.createElement('h2');
+        title.className = 'text-xl text-cyan-200 font-bold mb-4 flex items-center gap-3';
+
+        const img = document.createElement('img');
+        img.src = dayImages[day];
+        img.alt = day;
+        img.className = 'day-image';
+
+        const text = document.createElement('span');
+        text.textContent = day;
+
+        title.appendChild(img);
+        title.appendChild(text);
+
+        const ul = document.createElement('ul');
+        ul.className = 'space-y-2';
+        (tasks[day] || []).forEach((task, index) => {
+          const li = document.createElement('li');
+          li.className = 'bg-gray-800 p-3 rounded-lg flex justify-between items-center hover:scale-[1.02] transition';
+
+          const span = document.createElement('span');
+          span.textContent = task;
+
+          const delBtn = document.createElement('button');
+          delBtn.textContent = '❌';
+          delBtn.className = 'text-red-400 hover:text-red-600';
+          delBtn.onclick = () => {
+            tasks[day].splice(index, 1);
+            saveTasks();
+            renderTasks();
+          };
+
+          li.appendChild(span);
+          li.appendChild(delBtn);
+          ul.appendChild(li);
+        });
+
+        card.appendChild(title);
+        card.appendChild(ul);
+        planner.appendChild(card);
+      });
+    }
+
+    function addTask() {
+      const day = daySelect.value;
+      const task = taskInput.value.trim();
+      if (day && task) {
+        if (!tasks[day]) tasks[day] = [];
+        tasks[day].push(task);
+        saveTasks();
+        renderTasks();
+        taskInput.value = '';
+      }
+    }
+
+    renderTasks();
+  </script>
+</body>
+</html>
